@@ -1,0 +1,91 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.json"
+      - "**/*.css"
+      - ".eslintrc*"
+      - ".prettierrc*"
+      - ".github/workflows/lint.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.json"
+      - "**/*.css"
+      - ".eslintrc*"
+      - ".prettierrc*"
+      - ".github/workflows/lint.yml"
+
+jobs:
+  eslint:
+    name: ESLint and Prettier
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: ESLint Check
+        run: npx eslint --max-warnings=0 . || exit 1
+        continue-on-error: true
+        id: eslint
+
+      - name: Prettier Check
+        run: npx prettier --check .
+        continue-on-error: true
+        id: prettier
+
+      - name: Report ESLint Results
+        if: ${{ steps.eslint.outcome != 'success' && github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `## ESLint Failed
+            Please fix the ESLint errors before merging this pull request.
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Report Prettier Results
+        if: ${{ steps.prettier.outcome != 'success' && github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `## Prettier Formatting Failed
+            Please run \`npm run format\` to fix formatting issues before merging this pull request.
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Check if job failed
+        if: ${{ steps.eslint.outcome != 'success' || steps.prettier.outcome != 'success' }}
+        run: exit 1

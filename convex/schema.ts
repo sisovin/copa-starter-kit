@@ -27,4 +27,29 @@ export default defineSchema({
     resourceId: v.optional(v.string()),
     timestamp: v.number(),
   }),
+
+  payments: defineTable({
+    // Transaction information
+    transactionId: v.string(),
+    amount: v.number(),
+    currency: v.string(),
+    status: v.string(), // "pending", "completed", "failed", "refunded"
+    paymentMethod: v.string(), // "payway", "bakong", etc.
+
+    // Customer information
+    customerId: v.optional(v.string()), // Link to users table clerkId
+    customerEmail: v.string(),
+    customerName: v.optional(v.string()),
+
+    // Gateway-specific data
+    gatewayTransactionId: v.optional(v.string()),
+    gatewayResponse: v.optional(v.object({})),
+    checkoutUrl: v.optional(v.string()),
+
+    // Metadata and timestamps
+    metadata: v.optional(v.object({})),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }),
 });
