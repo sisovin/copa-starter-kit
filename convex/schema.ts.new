@@ -1,0 +1,263 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+/**
+ * Comprehensive schema for:
+ * 1. User profiles with Clerk integration
+ * 2. Blog posts with draft/published states
+ * 3. File uploads storage
+ * 4. API usage analytics
+ * 5. Type-safe query builders
+ */
+export default defineSchema({
+  // =================== USER PROFILES ===================
+  // Extended user table with Clerk integration
+  users: defineTable({
+    // Clerk authentication
+    clerkId: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    email: v.string(),
+    imageUrl: v.optional(v.string()),
+    username: v.optional(v.string()),
+    
+    // User profile data
+    bio: v.optional(v.string()),
+    location: v.optional(v.string()),
+    website: v.optional(v.string()),
+    socialLinks: v.optional(v.array(v.object({
+      platform: v.string(),
+      url: v.string(),
+    }))),
+    
+    // Usage data
+    lastActive: v.number(),
+    totalSessions: v.number(),
+    role: v.optional(v.union(v.literal("admin"), v.literal("editor"), v.literal("author"), v.literal("reader"))),
+    preferences: v.optional(v.object({
+      emailNotifications: v.optional(v.boolean()),
+      darkMode: v.optional(v.boolean()),
+      language: v.optional(v.string()),
+    })),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_clerk_id", ["clerkId"])
+    .index("by_email", ["email"])
+    .index("by_username", ["username"]),
+
+  // User followers/following relationships
+  userConnections: defineTable({
+    followerId: v.id("users"),
+    followingId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_follower", ["followerId"])
+    .index("by_following", ["followingId"])
+    .index("by_both", ["followerId", "followingId"]),
+
+  // =================== BLOG POSTS ===================
+  // Blog posts with draft/published states
+  blogPosts: defineTable({
+    // Content
+    title: v.string(),
+    slug: v.string(),
+    content: v.string(), // Markdown or HTML content
+    excerpt: v.optional(v.string()),
+    featuredImageId: v.optional(v.id("fileUploads")),
+    
+    // Metadata
+    authorId: v.id("users"),
+    status: v.union(v.literal("draft"), v.literal("published"), v.literal("archived")),
+    tags: v.optional(v.array(v.string())),
+    categories: v.optional(v.array(v.string())),
+    seoDescription: v.optional(v.string()),
+    
+    // Time tracking
+    publishedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    
+    // Stats
+    viewCount: v.number(),
+    likeCount: v.number(),
+    commentCount: v.number(),
+    
+    // Settings
+    allowComments: v.boolean(),
+    featured: v.boolean(),
+  })
+    .index("by_author", ["authorId"])
+    .index("by_status", ["status"])
+    .index("by_slug", ["slug"])
+    .index("by_tags", ["tags"])
+    .index("by_published_date", ["status", "publishedAt"])
+    .index("by_featured", ["featured", "status", "publishedAt"]),
+
+  // Blog post revisions for version history
+  blogPostRevisions: defineTable({
+    postId: v.id("blogPosts"),
+    title: v.string(),
+    content: v.string(),
+    authorId: v.id("users"),
+    createdAt: v.number(),
+    changeDescription: v.optional(v.string()),
+  })
+    .index("by_post_id", ["postId"])
+    .index("by_post_and_date", ["postId", "createdAt"]),
+
+  // Comments on blog posts
+  blogComments: defineTable({
+    postId: v.id("blogPosts"),
+    authorId: v.id("users"),
+    content: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    parentCommentId: v.optional(v.id("blogComments")),
+    status: v.union(v.literal("published"), v.literal("pending"), v.literal("spam"), v.literal("deleted")),
+  })
+    .index("by_post_id", ["postId"])
+    .index("by_author", ["authorId"])
+    .index("by_parent", ["parentCommentId"])
+    .index("by_post_and_status", ["postId", "status"]),
+
+  // Likes/reactions on posts
+  blogReactions: defineTable({
+    postId: v.id("blogPosts"),
+    userId: v.id("users"),
+    type: v.union(v.literal("like"), v.literal("bookmark"), v.literal("share")),
+    createdAt: v.number(),
+  })
+    .index("by_user_and_post", ["userId", "postId"])
+    .index("by_post_and_type", ["postId", "type"]),
+
+  // =================== FILE UPLOADS ===================
+  // File uploads storage
+  fileUploads: defineTable({
+    filename: v.string(),
+    mimeType: v.string(),
+    size: v.number(), // in bytes
+    storageId: v.string(), // ID in the file storage system
+    url: v.string(),
+    
+    // Metadata
+    uploadedBy: v.id("users"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    alt: v.optional(v.string()), // Alt text for images
+    
+    // File metadata
+    width: v.optional(v.number()), // For images
+    height: v.optional(v.number()), // For images
+    duration: v.optional(v.number()), // For audio/video
+    
+    // Access control and organization
+    isPublic: v.boolean(),
+    folder: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    
+    // Time tracking
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_uploader", ["uploadedBy"])
+    .index("by_mime_type", ["mimeType"])
+    .index("by_folder", ["folder"])
+    .index("by_tags", ["tags"]),
+
+  // File folders for organization
+  fileFolders: defineTable({
+    name: v.string(),
+    parentFolderId: v.optional(v.id("fileFolders")),
+    ownerId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_parent", ["parentFolderId"]),
+
+  // =================== API USAGE ANALYTICS ===================
+  // User activities and analytics
+  activities: defineTable({
+    userId: v.id("users"),
+    action: v.string(),
+    resourceType: v.string(),
+    resourceId: v.optional(v.string()),
+    timestamp: v.number(),
+    metadata: v.optional(v.object({})),
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_action", ["action"])
+    .index("by_resource_type", ["resourceType"])
+    .index("by_resource", ["resourceType", "resourceId"])
+    .index("by_timestamp", ["timestamp"]),
+
+  // API endpoint usage tracking
+  apiUsage: defineTable({
+    endpoint: v.string(),
+    method: v.string(), // GET, POST, etc.
+    userId: v.optional(v.id("users")),
+    statusCode: v.number(),
+    latencyMs: v.number(),
+    timestamp: v.number(),
+    requestSize: v.optional(v.number()), // in bytes
+    responseSize: v.optional(v.number()), // in bytes
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+  })
+    .index("by_endpoint", ["endpoint"])
+    .index("by_user", ["userId"])
+    .index("by_timestamp", ["timestamp"])
+    .index("by_status_code", ["statusCode"]),
+
+  // Aggregated statistics
+  stats: defineTable({
+    title: v.string(),
+    value: v.string(),
+    description: v.string(),
+    icon: v.string(), // Name of the icon
+    trend: v.string(), // "up" or "down"
+    updatedAt: v.number(),
+  }),
+
+  // Rate limiting and quotas
+  userQuotas: defineTable({
+    userId: v.id("users"),
+    quotaType: v.string(), // "api_calls", "uploads", etc.
+    limit: v.number(),
+    used: v.number(),
+    resetAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user_and_type", ["userId", "quotaType"]),
+
+  // =================== SYSTEM TABLES ===================
+  // System settings and configuration
+  systemSettings: defineTable({
+    key: v.string(),
+    value: v.any(),
+    description: v.optional(v.string()),
+    updatedBy: v.optional(v.id("users")),
+    updatedAt: v.number(),
+  })
+    .index("by_key", ["key"]),
+    
+  // Audit logs
+  auditLogs: defineTable({
+    userId: v.optional(v.id("users")),
+    action: v.string(),
+    resourceType: v.string(),
+    resourceId: v.optional(v.string()),
+    previousState: v.optional(v.any()),
+    newState: v.optional(v.any()),
+    timestamp: v.number(),
+    ipAddress: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_action", ["action"])
+    .index("by_resource", ["resourceType", "resourceId"])
+    .index("by_timestamp", ["timestamp"]),
+});

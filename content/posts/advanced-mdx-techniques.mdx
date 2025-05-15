@@ -1,0 +1,81 @@
+---
+title: Advanced MDX Techniques
+date: 2025-05-16
+author: GitHub Copilot
+description: Explore advanced features and techniques for MDX blog posts
+tags: [mdx, markdown, advanced, blog]
+---
+
+# Advanced MDX Techniques
+
+Once you're comfortable with the basics, it's time to explore more advanced MDX features.
+
+## Dynamic Content
+
+You can use JavaScript expressions to create dynamic content:
+
+```jsx
+export const year = new Date().getFullYear();
+
+<p>This blog post was last updated in {year}.</p>;
+```
+
+## Custom Layout Components
+
+MDX allows you to create specialized layout components:
+
+```jsx
+<div className="grid grid-cols-2 gap-4">
+  <div>Column 1 content</div>
+  <div>Column 2 content</div>
+</div>
+```
+
+## Interactive Elements
+
+You can add interactive elements like buttons and forms:
+
+```jsx
+export const Counter = () => {
+  const [count, setCount] = React.useState(0);
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+    </div>
+  );
+};
+
+<Counter />;
+```
+
+## Importing Data
+
+You can import data from other files:
+
+```jsx
+import data from "../data/example.json";
+
+<p>There are {data.items.length} items in the dataset.</p>;
+```
+
+## Conditional Rendering
+
+You can conditionally render content:
+
+```jsx
+export const isAdmin = true;
+
+{
+  isAdmin && <p>This content is only visible to admins.</p>;
+}
+```
+
+<Callout type="warning">
+  Be careful with conditional rendering in MDX. It can make your content harder
+  to maintain if overused.
+</Callout>
+
+## Conclusion
+
+These advanced MDX techniques allow you to create rich, interactive blog posts with dynamic content and custom components.
