@@ -1,3 +1,5 @@
+import { AuthAuditLogProvider } from "@/contexts/auth-audit-provider";
+import { NextThemeWrapper, ThemeProvider } from "@/contexts/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -25,14 +27,42 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {/* All client providers go inside body, not around html/body */}
+        <ClerkProvider
+          appearance={{
+            variables: { colorPrimary: "hsl(210, 100%, 56%)" },
+            elements: {
+              formButtonPrimary: "bg-primary hover:bg-primary/90",
+              card: "bg-background border border-border shadow-sm",
+              socialButtonsIconButton:
+                "border-border bg-muted hover:bg-muted/80",
+              formFieldInput: "bg-input border-input",
+            },
+          }}
+          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+          afterSignInUrl="/dashboard"
+          afterSignUpUrl="/dashboard"
         >
-          <ConvexClientProvider>{children}</ConvexClientProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+          <NextThemeWrapper
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            suppressHydrationWarning
+          >
+            <ThemeProvider>
+              <ConvexClientProvider>
+                <AuthAuditLogProvider>{children}</AuthAuditLogProvider>
+              </ConvexClientProvider>
+            </ThemeProvider>
+          </NextThemeWrapper>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

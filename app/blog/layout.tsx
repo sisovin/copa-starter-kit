@@ -14,12 +14,5 @@ interface BlogLayoutProps {
 }
 
 export default function BlogLayout({ children }: BlogLayoutProps) {
-  return (
-    <ClientLayout>
-      {children}
-    </ClientLayout>
-        </div>
-      </footer>
-    </div>
-  );
+  return <ClientLayout>{children}</ClientLayout>;
 }

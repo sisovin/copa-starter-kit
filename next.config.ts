@@ -22,6 +22,23 @@ const nextConfig: NextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  // Handle Storybook integration
+  transpilePackages: ["storybook", "@storybook"],
+
+  // Next.js 15 uses turbopack by default, configure it here
+  experimental: {
+    // Optimize package imports
+    optimizePackageImports: ["@storybook"],
+  },
+
+  // Turbopack specific configuration (now stable and moved out of experimental)
+  turbopack: {
+    // Rules for files to ignore in Turbopack
+    resolveExtensions: [
+      // Skip Storybook related files
+      ".js", ".jsx", ".ts", ".tsx",
+    ]
+  },
 };
 
 // Wrap the Next.js config with ContentLayer

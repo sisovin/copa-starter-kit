@@ -12,7 +12,7 @@ import { useEffect } from "react";
  */
 export function ClerkConvexSync() {
   const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
-  const createOrUpdateUser = useMutation(api.queries.createOrUpdateUser);
+  const createOrUpdateUser = useMutation(api.actions.createOrUpdateUser);
   const { user, isLoaded: isUserLoaded } = useUser();
   const router = useRouter();
 

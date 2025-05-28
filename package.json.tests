@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:payment-flows": "playwright test payment-flows.spec.ts",
+    "test:e2e:mobile": "playwright test mobile-viewport.spec.ts",
+    "test:e2e:accessibility": "playwright test accessibility.spec.ts",
+    "test:e2e:concurrent": "playwright test concurrent-payments.spec.ts",
+    "test:e2e:webhooks": "playwright test webhook-timeout.spec.ts",
+    "test:e2e:bakong-failures": "playwright test bakong-failure.spec.ts",
+    "test:e2e:debug": "playwright test --debug",
+    "mock-servers": "ts-node __tests__/mocks/environment-switcher.ts",
+    "mock-servers:error": "ts-node __tests__/mocks/environment-switcher.ts --env=error-prone",
+    "mock-servers:slow": "ts-node __tests__/mocks/environment-switcher.ts --env=slow-response",
+    "mock-servers:mixed": "ts-node __tests__/mocks/environment-switcher.ts --env=mixed"
+  }
+}
