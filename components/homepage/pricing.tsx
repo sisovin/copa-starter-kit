@@ -18,11 +18,76 @@ import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+// Create a mock user hook for development mode that better matches Clerk's UserResource type
+import type { UserResource } from "@clerk/types";
+
+const useDevelopmentUser = () => {
+  // This hook creates a mock that's compatible with ReturnType<typeof useUser>["user"]
+  const mockUser = {
+    id: "dev-user-id",
+    externalId: "ext-dev-user-id",
+    firstName: "Dev",
+    lastName: "User",
+    fullName: "Dev User",
+    imageUrl: "",
+    primaryEmailAddressId: "email-1",
+    primaryPhoneNumberId: null,
+    primaryEmailAddress: {
+      id: "email-1",
+      emailAddress: "dev@example.com",
+      verification: { status: "verified" },
+      linkedTo: [],
+    },
+    primaryPhoneNumber: null,
+    emailAddresses: [
+      {
+        id: "email-1",
+        emailAddress: "dev@example.com",
+        verification: { status: "verified" },
+        linkedTo: [],
+      },
+    ],
+    phoneNumbers: [],
+    username: "devuser",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    publicMetadata: {},
+    privateMetadata: {},
+    unsafeMetadata: {},
+    // Additional properties used by Clerk
+    getOrganizationMemberships: () => [],
+    getOrganizationInvitations: () => [],
+    hasPermission: () => false,
+    hasRole: () => false,
+    // Add missing properties as undefined or empty for type compatibility
+    primaryWeb3WalletId: undefined,
+    primaryWeb3Wallet: undefined,
+    hasImage: false,
+    web3Wallets: [],
+    twoFactorEnabled: false,
+    lastSignInAt: null,
+    lastActiveAt: null,
+    passwordEnabled: false,
+    totpEnabled: false,
+    backupCodeEnabled: false,
+    externalAccounts: [],
+    samlAccounts: [],
+    organizationMemberships: [],
+    // Add any other required properties as needed
+  } as unknown as UserResource;
+
+  return {
+    user: mockUser,
+    isLoaded: true,
+    isSignedIn: true,
+  };
+};
+
 interface Price {
   id: string;
   priceAmount: number;
   priceCurrency: string;
-  recurringInterval: 'month' | 'year';
+  recurringInterval: "month" | "year";
   productId?: string;
 }
 
@@ -61,7 +126,7 @@ type PricingSwitchProps = {
 };
 
 type PricingCardProps = {
-  user: ReturnType<typeof useUser>['user'];
+  user: ReturnType<typeof useUser>["user"];
   isYearly?: boolean;
   name: string;
   prices: Price[];
@@ -116,17 +181,22 @@ const PricingCard = ({
   benefits,
 }: PricingCardProps) => {
   const router = useRouter();
-  const getProCheckoutUrl = useAction(api.subscriptions.getProOnboardingCheckoutUrl);
+  const getProCheckoutUrl = useAction(
+    api.subscriptions.getProOnboardingCheckoutUrl
+  );
 
-  const currentPrice = prices.find(price =>
-    isYearly
-      ? price.recurringInterval === 'year'
-      : price.recurringInterval === 'month'
-  ) || prices[0];
+  const currentPrice =
+    prices.find((price) =>
+      isYearly
+        ? price.recurringInterval === "year"
+        : price.recurringInterval === "month"
+    ) || prices[0];
 
-  const priceAmount = currentPrice ? (currentPrice.priceAmount / 100).toFixed(2) : '0';
-  const currency = currentPrice?.priceCurrency?.toUpperCase() || 'USD';
-  const interval = isYearly ? 'year' : 'month';
+  const priceAmount = currentPrice
+    ? (currentPrice.priceAmount / 100).toFixed(2)
+    : "0";
+  const currency = currentPrice?.priceCurrency?.toUpperCase() || "USD";
+  const interval = isYearly ? "year" : "month";
 
   const handleCheckout = async () => {
     if (!currentPrice) return;
@@ -159,15 +229,13 @@ const PricingCard = ({
     <Card className="relative w-full max-w-sm mx-4 transition-all duration-300 hover:scale-105 hover:shadow-lg">
       <CardHeader className="space-y-2">
         <CardTitle className="text-2xl font-bold">{name}</CardTitle>
-        <CardDescription className="text-base">
-          {description}
-        </CardDescription>
+        <CardDescription className="text-base">{description}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
         <div className="flex items-baseline gap-2">
           <span className="text-5xl font-bold tracking-tight">
-            {currency === 'USD' ? '$' : currency} {priceAmount}
+            {currency === "USD" ? "$" : currency} {priceAmount}
           </span>
           <span className="text-lg text-muted-foreground">/{interval}</span>
         </div>
@@ -176,7 +244,9 @@ const PricingCard = ({
           {benefits.map((benefit, index) => (
             <div key={index} className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-blue-500" />
-              <p className="text-sm text-muted-foreground">{benefit.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {benefit.description}
+              </p>
             </div>
           ))}
         </div>
@@ -197,14 +267,24 @@ const PricingCard = ({
 export default function Pricing({ result }: PricingProps) {
   const [isYearly, setIsYearly] = useState<boolean>(false);
   const [hasYearlyPlans, setHasYearlyPlans] = useState(false);
-  const { user } = useUser();
+  // Check if we're in development mode with auth bypass
+  const isDevelopment = process.env.NODE_ENV === "development";
+  const bypassAuth = isDevelopment || process.env.BYPASS_AUTH === "true";
 
-  const togglePricingPeriod = (value: string) => setIsYearly(parseInt(value) === 1);
+  // Always call both hooks unconditionally
+  const devUser = useDevelopmentUser();
+  const prodUser = useUser();
+
+  // Use real or mock user based on environment
+  const { user } = bypassAuth ? devUser : prodUser;
+
+  const togglePricingPeriod = (value: string) =>
+    setIsYearly(parseInt(value) === 1);
 
   useEffect(() => {
     // Check if any products have yearly pricing
-    const hasYearly = result.items.some(product =>
-      product.prices.some(price => price.recurringInterval === 'year')
+    const hasYearly = result.items.some((product) =>
+      product.prices.some((price) => price.recurringInterval === "year")
     );
     setHasYearlyPlans(hasYearly);
 
@@ -215,11 +295,11 @@ export default function Pricing({ result }: PricingProps) {
   }, [result.items, isYearly]);
 
   // Filter products based on current interval selection
-  const filteredProducts = result.items.filter(item =>
-    item.prices?.some(price =>
+  const filteredProducts = result.items.filter((item) =>
+    item.prices?.some((price) =>
       isYearly
-        ? price.recurringInterval === 'year'
-        : price.recurringInterval === 'month'
+        ? price.recurringInterval === "year"
+        : price.recurringInterval === "month"
     )
   );
 
@@ -249,7 +329,7 @@ export default function Pricing({ result }: PricingProps) {
               key={item.id}
               user={user}
               name={item.name}
-              description={item.description || ''}
+              description={item.description || ""}
               prices={item.prices}
               benefits={item.benefits}
               isYearly={isYearly}

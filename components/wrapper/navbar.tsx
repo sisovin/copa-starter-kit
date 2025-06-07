@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { Github, Menu, Sparkles, Twitter, Youtube } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
+import { LanguageSwitcher } from "../language-switcher";
 import ModeToggle from "../mode-toggle";
 import { Button } from "../ui/button";
 import {
@@ -23,6 +24,16 @@ import {
   SheetTrigger,
 } from "../ui/sheet";
 import { UserProfile } from "../user-profile";
+
+// Create a mock auth hook for development mode
+const useDevelopmentAuth = () => {
+  return {
+    isSignedIn: true,
+    userId: "dev-user-123",
+    sessionId: "dev-session-123",
+    getToken: async () => "dev-token-for-testing",
+  };
+};
 
 const components: { title: string; href: string; description: string }[] = [
   {
@@ -43,7 +54,17 @@ const components: { title: string; href: string; description: string }[] = [
 ];
 
 export default function NavBar() {
-  const { userId } = useAuth();
+  // Check if we're in development mode with auth bypass
+  const isDevelopment = process.env.NODE_ENV === "development";
+  const bypassAuth = isDevelopment || process.env.BYPASS_AUTH === "true";
+
+  // Use real or mock auth based on environment
+  // Always call both hooks unconditionally
+  const devAuth = useDevelopmentAuth();
+  const prodAuth = useAuth();
+
+  // Use real or mock auth based on environment
+  const { userId } = bypassAuth ? devAuth : prodAuth;
 
   return (
     <motion.div
@@ -62,10 +83,11 @@ export default function NavBar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px]">
+              {" "}
               <SheetHeader className="pb-6 border-b">
                 <SheetTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-blue-600" />
-                  <span>Next Starter</span>
+                  <span>Copa Starter</span>
                 </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-1 mt-6">
@@ -140,21 +162,19 @@ export default function NavBar() {
                 )}
               </div>
             </SheetContent>
-          </Dialog>
+          </Dialog>{" "}
           <Link href="/" prefetch={true} className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-blue-600" />
-            <span className="font-semibold">Next Starter</span>
+            <span className="font-semibold">Copa Starter</span>
           </Link>
         </div>
-
         {/* Logo - Desktop */}
         <div className="hidden lg:flex items-center gap-2">
           <Link href="/" prefetch={true} className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-blue-600" />
-            <span className="font-semibold">Next Starter</span>
+            <span className="font-semibold">Copa Starter</span>
           </Link>
         </div>
-
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-6">
           <NavigationMenu>
@@ -192,10 +212,10 @@ export default function NavBar() {
               <Github className="h-5 w-5" />
             </Button>
           </Link>
-        </div>
-
+        </div>{" "}
         {/* Right Side */}
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           <ModeToggle />
           {!userId && (
             <Link href="/sign-in" prefetch={true}>

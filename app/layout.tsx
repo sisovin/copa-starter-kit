@@ -10,8 +10,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://nextstarter.xyz/"),
   title: {
-    default: 'Next Starter',
-    template: `%s | Next Starter`
+    default: "Copa Starter",
+    template: `%s | Copa Starter`,
   },
   description:
     "The Ultimate Nextjs 15 Starter Kit for quickly building your SaaS, giving you time to focus on what really matters",
@@ -42,9 +42,39 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // In development mode, we can bypass authentication when keys aren't set up
+  const isDevelopment = process.env.NODE_ENV === "development";
+  const bypassAuth = isDevelopment || process.env.BYPASS_AUTH === "true";
+  // Complete bypass - render without any auth in development mode
+  if (bypassAuth) {
+    console.log("Development mode: bypassing Clerk authentication");
+    return (
+      <html lang="km" suppressHydrationWarning>
+        <body className={GeistSans.className}>
+          <Provider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster closeButton richColors position="top-right" />
+              <Analytics />
+            </ThemeProvider>
+          </Provider>
+        </body>
+      </html>
+    );
+  } // Normal flow with Clerk authentication
   return (
-    <ClerkProvider dynamic>
-      <html lang="en" suppressHydrationWarning>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        baseTheme: undefined,
+      }}
+    >
+      <html lang="km" suppressHydrationWarning>
         <body className={GeistSans.className}>
           <Provider>
             <ThemeProvider

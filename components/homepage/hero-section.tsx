@@ -1,10 +1,12 @@
 "use client";
 import { ArrowRight, Github, Sparkles } from "lucide-react";
+import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "../ui/button";
-import { motion } from "motion/react";
 
 export default function HeroSection() {
+  const t = useTranslations("hero");
   return (
     <section
       className="relative flex flex-col items-center justify-center py-20"
@@ -36,8 +38,7 @@ export default function HeroSection() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-gray-900 dark:from-white dark:via-blue-300 dark:to-white animate-gradient-x pb-2"
         >
-          Build Faster with <br className="hidden sm:block" />
-          Next Starter
+          {t("title")}
         </motion.h1>
 
         {/* Subtitle */}
@@ -47,8 +48,7 @@ export default function HeroSection() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
         >
-          Launch your SaaS in minutes with our production-ready Next.js starter
-          kit. Everything you need, from auth to payments.
+          {t("subtitle")}
         </motion.p>
 
         {/* CTA Buttons */}
@@ -63,7 +63,7 @@ export default function HeroSection() {
               size="lg"
               className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-8 h-12"
             >
-              Get Started
+              {t("getStarted")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
@@ -78,7 +78,7 @@ export default function HeroSection() {
               size="lg"
               className="rounded-full px-8 h-12 border-2"
             >
-              Join Discord
+              {t("learnMore")}
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Button>
           </Link>
