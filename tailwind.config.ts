@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { Config } from "tailwindcss";
 
 const svgToDataUri = require("mini-svg-data-uri");
@@ -19,6 +20,20 @@ const config: Config = {
   darkMode: "class", // Assuming you want to enable dark mode based on the class strategy
   theme: {
     // Merging container configuration from the second file
+=======
+import { type Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
+import defaultTheme from "tailwindcss/defaultTheme";
+
+export default {
+  darkMode: "class",
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+>>>>>>> origin/main
     container: {
       center: true,
       padding: "2rem",
@@ -27,6 +42,7 @@ const config: Config = {
       },
     },
     extend: {
+<<<<<<< HEAD
       // Merging backgroundImage from the first file
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
@@ -34,6 +50,12 @@ const config: Config = {
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       // Merging colors, borderRadius, keyframes, and animation from the second file
+=======
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", ...defaultTheme.fontFamily.sans],
+        mono: ["var(--font-geist-mono)", ...defaultTheme.fontFamily.mono],
+      },
+>>>>>>> origin/main
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -44,6 +66,7 @@ const config: Config = {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
+<<<<<<< HEAD
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
@@ -182,3 +205,15 @@ const config: Config = {
 };
 
 export default config;
+=======
+        // ... other color extensions
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+    },
+  },
+  plugins: [animate],
+} satisfies Config;
+>>>>>>> origin/main

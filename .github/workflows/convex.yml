@@ -1,0 +1,101 @@
+name: Convex Schema Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "convex/**/*.ts"
+      - "convex/schema.ts"
+      - ".github/workflows/convex.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "convex/**/*.ts"
+      - "convex/schema.ts"
+      - ".github/workflows/convex.yml"
+
+jobs:
+  validate-convex-schema:
+    name: Validate Convex Schema
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Convex CLI
+        run: npm install --global convex@latest
+
+      - name: Set up Convex Environment
+        run: |
+          echo "CONVEX_DEPLOYMENT=${{ secrets.CONVEX_DEPLOYMENT || 'placeholder' }}" > .env.local
+          echo "NEXT_PUBLIC_CONVEX_URL=${{ secrets.NEXT_PUBLIC_CONVEX_URL || 'https://placeholder.convex.cloud' }}" >> .env.local
+
+      - name: Validate Convex Schema
+        id: schema-check
+        run: |
+          # Create a script that will run the validation without connecting to a live deployment
+          cat > validate-schema.js << 'EOF'
+          const { readFileSync } = require('fs');
+          const { resolve } = require('path');
+
+          try {
+            // Basic syntax check of schema
+            const schemaPath = resolve('./convex/schema.ts');
+            require(schemaPath);
+            console.log('✅ Schema syntax is valid');
+            
+            // Look for common schema issues
+            const schemaContent = readFileSync(schemaPath, 'utf8');
+            
+            // Check for missing fields in schema
+            if (!schemaContent.includes('defineSchema(')) {
+              console.error('❌ Schema does not use defineSchema()');
+              process.exit(1);
+            }
+            
+            // Check for missing indexes where they might be needed
+            if ((schemaContent.match(/\.index\(/g) || []).length < 1 && schemaContent.includes('.field(')) {
+              console.warn('⚠️ Schema might be missing indexes on some fields');
+            }
+            
+            console.log('✅ Schema validation passed');
+            process.exit(0);
+          } catch (error) {
+            console.error('❌ Schema validation failed:', error.message);
+            process.exit(1);
+          }
+          EOF
+
+          node validate-schema.js
+        continue-on-error: true
+
+      - name: Report Schema Validation Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const outcome = '${{ steps.schema-check.outcome }}';
+            const body = outcome === 'success' 
+              ? '✅ Convex schema validation passed!'
+              : '❌ Convex schema validation failed. Please check the action log for details.';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            })
+        continue-on-error: true
+
+      - name: Fail if schema check failed
+        if: steps.schema-check.outcome != 'success'
+        run: exit 1

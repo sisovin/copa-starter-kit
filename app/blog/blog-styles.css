@@ -1,0 +1,237 @@
+/* Blog-specific styles */
+
+/* Reading progress bar */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 50;
+  background-color: transparent;
+}
+
+.reading-progress-bar {
+  height: 100%;
+  background-color: hsl(var(--primary));
+  transition: width 0.3s ease-out;
+}
+
+/* Responsive typography */
+.blog-content {
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  line-height: clamp(1.5, 1.45 + 0.25vw, 1.75);
+}
+
+.blog-content h1 {
+  font-size: clamp(2rem, 1.8rem + 1vw, 3rem);
+  line-height: 1.2;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.blog-content h2 {
+  font-size: clamp(1.5rem, 1.3rem + 1vw, 2.25rem);
+  line-height: 1.2;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.blog-content h3 {
+  font-size: clamp(1.25rem, 1.15rem + 0.5vw, 1.75rem);
+  line-height: 1.2;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Enhanced code blocks with dark mode support */
+.blog-content pre {
+  padding: 1rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  background-color: hsl(220 13% 18%); /* Dark background regardless of theme */
+  color: hsl(220 14% 90%); /* Light text */
+}
+
+.blog-content code {
+  font-family: monospace;
+  font-size: 0.875rem;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.blog-content :not(pre) > code {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.dark .blog-content :not(pre) > code {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.blog-content pre code {
+  padding: 0;
+  background-color: transparent;
+  color: inherit;
+}
+
+/* Author bio section */
+.author-bio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  margin-top: 2rem;
+}
+
+@media (min-width: 640px) {
+  .author-bio {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.author-avatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.author-info {
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .author-info {
+    text-align: left;
+  }
+}
+
+.author-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.author-description {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Share buttons */
+.share-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Reading time */
+.reading-time {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+}
+
+/* Table of contents */
+.table-of-contents {
+  position: sticky;
+  top: 5rem;
+  max-height: calc(100vh - 10rem);
+  overflow-y: auto;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.toc-heading {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.toc-link {
+  display: block;
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  transition: color 0.2s;
+}
+
+.toc-link:hover {
+  color: hsl(var(--foreground));
+}
+
+.toc-link-active {
+  color: hsl(var(--primary));
+  font-weight: 500;
+}
+
+.toc-link-level-3 {
+  padding-left: 1rem;
+}
+
+/* Syntax highlighting for code blocks */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: hsl(220 14% 60%);
+}
+
+.token.punctuation {
+  color: hsl(220 14% 70%);
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: hsl(35 90% 70%); /* Orange/gold */
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: hsl(120 40% 70%); /* Green */
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: hsl(200 70% 70%); /* Blue */
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: hsl(280 60% 75%); /* Purple */
+}
+
+.token.function,
+.token.class-name {
+  color: hsl(10 90% 70%); /* Red */
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: hsl(35 90% 60%); /* Dark orange */
+}

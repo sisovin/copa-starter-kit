@@ -1,0 +1,120 @@
+name: Bundle Size Analysis
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "package.json"
+      - "next.config.*"
+      - ".github/workflows/bundle-analysis.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "package.json"
+      - "next.config.*"
+      - ".github/workflows/bundle-analysis.yml"
+
+jobs:
+  analyze:
+    name: Analyze Bundle Size
+    runs-on: ubuntu-latest
+    env:
+      NEXT_BUNDLE_ANALYZER: true
+      ANALYZE: true
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Bundle Analyzer
+        run: |
+          npm install --save-dev @next/bundle-analyzer cross-env
+
+      - name: Update next.config.ts for bundle analysis
+        run: |
+          if [ -f "next.config.ts" ]; then
+            # Create a temp file with the bundle analyzer configuration
+            cat > temp-config.js << 'EOF'
+            const withBundleAnalyzer = require('@next/bundle-analyzer')({
+              enabled: process.env.ANALYZE === 'true',
+            });
+            
+            // Read the existing config
+            const originalConfig = require('./next.config.ts');
+            
+            // Export the enhanced config
+            module.exports = withBundleAnalyzer(originalConfig);
+            EOF
+            
+            # Make a backup of the original file
+            cp next.config.ts next.config.ts.bak
+            
+            # Append the analyzer to the config
+            cat temp-config.js >> next.config.ts
+          fi
+
+      - name: Build with Bundle Analyzer
+        run: cross-env ANALYZE=true npm run build
+        continue-on-error: true
+
+      - name: Upload Bundle Analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis
+          path: |
+            .next/analyze/client.html
+            .next/analyze/server.html
+          retention-days: 30
+
+      - name: Get Bundle Stats
+        id: bundle-stats
+        run: |
+          if [ -d ".next" ]; then
+            echo "CLIENT_SIZE=$(du -sh .next/static 2>/dev/null | cut -f1)" >> $GITHUB_OUTPUT
+            echo "TOTAL_SIZE=$(du -sh .next 2>/dev/null | cut -f1)" >> $GITHUB_OUTPUT
+          else
+            echo "CLIENT_SIZE=N/A" >> $GITHUB_OUTPUT
+            echo "TOTAL_SIZE=N/A" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR with Bundle Size Info
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const clientSize = '${{ steps.bundle-stats.outputs.CLIENT_SIZE }}';
+            const totalSize = '${{ steps.bundle-stats.outputs.TOTAL_SIZE }}';
+
+            const body = `## 📦 Bundle Size Analysis
+
+            | Type | Size |
+            | ---- | ---- |
+            | Client-side bundle | ${clientSize} |
+            | Total build output | ${totalSize} |
+
+            Download the [bundle analysis artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed visualization.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            })
+        continue-on-error: true
